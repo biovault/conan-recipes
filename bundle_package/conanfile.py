@@ -1,5 +1,5 @@
 from conans import ConanFile
-from conans.tools import load
+from conans.tools import load, save
 from pathlib import Path
 from shutil import copytree
 
@@ -29,6 +29,14 @@ class BundleUtils(object):
             with open(idfile, "r") as pidfile:
                 package_id = pidfile.read().rstrip()
         return package_id
+    
+    def export(self):
+        print("In export")
+        # save the original source path to the directory used to build the package
+        save(
+            Path(self.export_folder, "__gitpath.txt"),
+            str(Path(__file__).parent.resolve()),
+        )
 
     def _merge_packages(self):
         if self.options.merge_package:
