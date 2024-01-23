@@ -30,13 +30,12 @@ class BundleUtils(object):
                 package_id = pidfile.read().rstrip()
         return package_id
     
-    def export(self):
-        print("In export")
-        # save the original source path to the directory used to build the package
+    def _save_git_path(self):
         save(
             Path(self.export_folder, "__gitpath.txt"),
             str(Path(__file__).parent.resolve()),
         )
+    
 
     def _merge_packages(self):
         if self.options.merge_package:
