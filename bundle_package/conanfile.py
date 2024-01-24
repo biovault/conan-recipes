@@ -2,16 +2,34 @@ from conans import ConanFile
 from conans.tools import load, save
 from pathlib import Path
 from shutil import copytree
+import tempfile
+import os
+import inspect 
 
 class BundleUtils(object):
+    # Default is to merge Debug & RelWithDebInfo to Release
+    # Override this in the child class if needed
     _merge_from = ["Debug", "RelWithDebInfo"]
     _merge_to = "Release"  
 
+    def _get_temp_save_dir(self):
+        return Path(tempfile.gettempdir(), self.name)
+    
+    def _save_git_path(self):
+        # Must be called from conan init or export as the
+        # working directory is the git path at that point
+        if inspect.stack()[1].function != "init" and inspect.stack()[1].function != "export":
+            raise RuntimeError("_save_git_path must be called from conan init or export")
+        caller_dir = Path(os.getcwd()).resolve()
+        save(
+            Path(self._get_temp_save_dir(), "__gitpath.txt"),
+            str(caller_dir)
+        )
+
     def __get_git_path(self):
         path = load(
-            Path(Path(__file__).parent.resolve(), "__gitpath.txt")
+            Path(self._get_temp_save_dir(), "__gitpath.txt")
         )
-        print(f"git info from {path}")
         return path
 
     def _save_package_id(self, build_type=None):
@@ -30,13 +48,6 @@ class BundleUtils(object):
                 package_id = pidfile.read().rstrip()
         return package_id
     
-    def _save_git_path(self):
-        save(
-            Path(self.export_folder, "__gitpath.txt"),
-            str(Path(__file__).parent.resolve()),
-        )
-    
-
     def _merge_packages(self):
         if self.options.merge_package:
             # Merge any other available packages into the merge target package
